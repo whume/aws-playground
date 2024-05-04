@@ -1,23 +1,29 @@
-name: Digger Tests
+name: Digger Workflow
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    branches: [ "main" ]
+    types: [ closed, opened, synchronize, reopened ]
+  issue_comment:
+    types: [created]
+    if: contains(github.event.comment.body, 'digger')
+  workflow_dispatch:
+
 jobs:
-  digger-tests:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+      statuses: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
-
-      - name: Install Digger
-        run: |
-          pip install digger
-
-      - name: Run Digger tests
-        run: |
-          digger -d ./organization
+      - name: digger run
+        uses: diggerhq/digger@v0.4.21
+        with:
+          setup-aws: true
+          aws-role-to-assume: arn:aws:iam::176207359176:role/github-actions-GitHubActionsServiceRole-BwQR0UB8GquE
+          aws-region: us-east-1
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,16 +11,16 @@ data "aws_organizations_organizational_unit_child_accounts" "security_accounts" 
 locals {
   all_accounts = [
     for a in data.aws_organizations_organization.current.accounts :
-      a.id
-      if a.status == "ACTIVE"
-    ]
+    a.id
+    if a.status == "ACTIVE"
+  ]
   security_ou_id = [
-    for  ou in data.aws_organizations_organizational_units.all_ous.children : ou.id
+    for ou in data.aws_organizations_organizational_units.all_ous.children : ou.id
     if ou.name == "Security"
   ]
   security_accounts = [
     for a in data.aws_organizations_organizational_unit_child_accounts.security_accounts.accounts : a.id
-      if a.status == "ACTIVE"
+    if a.status == "ACTIVE"
   ]
 
 }
@@ -48,13 +48,13 @@ module "aws-iam-identity-center" {
       principal_name  = "AWS"
       principal_type  = "GROUP"
       permission_sets = ["AdministratorAccess"]
-      account_ids = local.all_accounts
+      account_ids     = local.all_accounts
     },
     Audit : {
       principal_name  = "AWS"
       principal_type  = "GROUP"
       permission_sets = ["ViewOnlyAccess"]
-      account_ids = local.security_accounts
+      account_ids     = local.security_accounts
     },
   }
 }
