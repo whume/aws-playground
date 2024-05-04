@@ -7,3 +7,11 @@ provider "aws" {
     }
   }
 }
+
+terraform {
+  backend "s3" {
+    bucket = "tf-state-176207359176"
+    key    = "organization/terraform.tfstate"
+    region = "us-east-1"
+  }
+}

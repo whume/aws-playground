@@ -23,6 +23,11 @@ resource "aws_organizations_organizational_unit" "tech" {
   parent_id = aws_organizations_organization.org.roots[0].id
 }
 
+resource "aws_organizations_organizational_unit" "sandbox" {
+  name      = "Sandbox"
+  parent_id = aws_organizations_organization.org.roots[0].id
+}
+
 resource "aws_organizations_organizational_unit" "suspended" {
   name      = "Suspended"
   parent_id = aws_organizations_organization.org.roots[0].id

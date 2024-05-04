@@ -8,6 +8,11 @@ resource "aws_cloudformation_stack_set" "terraform" {
   auto_deployment {
     enabled = true
   }
+  lifecycle {
+    ignore_changes = [
+      administration_role_arn
+    ]
+  }
 }
 
 resource "aws_cloudformation_stack_set_instance" "terraform" {
