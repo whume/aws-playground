@@ -1,0 +1,23 @@
+name: Digger Tests
+on:
+  push:
+    branches:
+      - main
+jobs:
+  digger-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Install Digger
+        run: |
+          pip install digger
+
+      - name: Run Digger tests
+        run: |
+          digger -d ./organization

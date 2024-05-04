@@ -1,0 +1,7 @@
+tests:
+  - name: terraform-format
+    type: command
+    command: terraform fmt -check ./organization
+  - name: terraform-validate
+    type: command
+    command: terraform validate ./organization
