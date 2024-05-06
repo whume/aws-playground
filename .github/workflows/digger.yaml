@@ -9,6 +9,10 @@ on:
   workflow_dispatch:
 
 jobs:
+  permissions:
+    contents: write
+    issues: read
+    pull-requests: write
   build:
     runs-on: ubuntu-latest
     permissions:
