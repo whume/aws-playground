@@ -34,16 +34,14 @@ jobs:
       - name: Run Terraform Plan
         id: plan
         working-directory: organization
-        run: terraform plan -no-color > tfplan.txt
+        run: terraform plan -no-color > ../tfplan.txt
 
       - name: Output Terraform Plan
-        working-directory: organization
-        run: cat tfplan.txt
+        run: cat ../tfplan.txt
 
       - name: Post PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          working-directory: organization
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           header: "### Terraform Plan Results"
           message: |
