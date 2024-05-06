@@ -9,10 +9,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  permissions:
-    contents: write
-    issues: read
-    pull-requests: write
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -22,6 +18,12 @@ jobs:
       statuses: write
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Debug GitHub Context
+        run: echo '${{ toJson(github) }}'
+
       - name: digger run
         uses: diggerhq/digger@v0.4.21
         with:
