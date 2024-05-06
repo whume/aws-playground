@@ -39,13 +39,19 @@ jobs:
         working-directory: organization
         run: terraform plan -no-color > ../tfplan.txt
 
-      - name: Output Terraform Plan
-        run: cat tfplan.txt
-
+      - name: Read Terraform Plan Output
+        id: read_plan
+        run: |
+          plan_output=$(cat tfplan.txt)
+          echo "::set-output name=plan::${plan_output}"
+            
+      # Post the Terraform Plan output as a PR comment
       - name: Post PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           header: "### Terraform Plan Results"
           message: |
-            cat tfplan.txt
+            ```
+            ${{ steps.read_plan.outputs.plan }}
+                ```
