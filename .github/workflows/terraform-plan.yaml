@@ -37,7 +37,7 @@ jobs:
         run: terraform plan -no-color > ../tfplan.txt
 
       - name: Output Terraform Plan
-        run: cat ../tfplan.txt
+        run: cat tfplan.txt
 
       - name: Post PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
