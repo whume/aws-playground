@@ -10,8 +10,11 @@ jobs:
   terraform-plan:
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       id-token: write
-      contents: read
+      pull-requests: write
+      statuses: write
+
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
