@@ -4,6 +4,7 @@ provider "aws" {
     tags = {
       creator = "terraform"
       repo    = "github.com/whume/aws-playground"
+      stack   = "organization"
     }
   }
 }

@@ -1,4 +1,4 @@
-name: Terraform Workflow
+name: Terraform Plan Workflow
 on:
   pull_request:
     branches: [ "main" ]
