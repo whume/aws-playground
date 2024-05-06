@@ -20,10 +20,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
-      - name: Debug GitHub Context
-        run: echo '${{ toJson(github) }}'
-
       - name: digger run
         uses: diggerhq/digger@v0.4.21
         with:
@@ -31,5 +27,4 @@ jobs:
           aws-role-to-assume: arn:aws:iam::176207359176:role/github-actions-GitHubActionsServiceRole-BwQR0UB8GquE
           aws-region: us-east-1
         env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
