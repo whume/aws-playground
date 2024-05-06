@@ -48,4 +48,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           header: "### Terraform Plan Results"
           message: |
-            $(cat tfplan.txt)
+            cat tfplan.txt
