@@ -42,8 +42,13 @@ jobs:
       - name: Read Terraform Plan Output
         id: read_plan
         run: |
+          # Read plan file content safely
           plan_output=$(cat tfplan.txt)
-          echo "::set-output name=plan::${plan_output}"
+          # Escape special characters in plan output for safe environment variable use
+          escaped_output="${plan_output//'%'/'%25'}"
+          escaped_output="${escaped_output//$'\n'/'%0A'}"
+          escaped_output="${escaped_output//$'\r'/'%0D'}"
+          echo "::set-output name=plan::${escaped_output}"
             
       # Post the Terraform Plan output as a PR comment
       - name: Post PR Comment
@@ -54,4 +59,4 @@ jobs:
           message: |
             ```
             ${{ steps.read_plan.outputs.plan }}
-                ```
+            ```
