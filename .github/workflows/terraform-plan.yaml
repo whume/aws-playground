@@ -1,4 +1,4 @@
-name: Terraform Workflow
+name: Terraform Plan Workflow
 on:
   pull_request:
     branches: [ "main" ]
@@ -9,6 +9,12 @@ on:
 jobs:
   terraform-plan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+      statuses: write
+
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -25,15 +31,26 @@ jobs:
           terraform_version: 1.3.0
 
       - name: Initialize Terraform
+        working-directory: organization
         run: terraform init
 
       - name: Run Terraform Plan
         id: plan
-        run: terraform plan -no-color > tfplan.txt
+        working-directory: organization
+        run: terraform plan -no-color > ../tfplan.txt
 
-      - name: Output Terraform Plan
-        run: cat tfplan.txt
-
+      - name: Read Terraform Plan Output
+        id: read_plan
+        run: |
+          # Read plan file content safely
+          plan_output=$(cat tfplan.txt)
+          # Escape special characters in plan output for safe environment variable use
+          escaped_output="${plan_output//'%'/'%25'}"
+          escaped_output="${escaped_output//$'\n'/'%0A'}"
+          escaped_output="${escaped_output//$'\r'/'%0D'}"
+          echo "::set-output name=plan::${escaped_output}"
+            
+      # Post the Terraform Plan output as a PR comment
       - name: Post PR Comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
@@ -41,5 +58,5 @@ jobs:
           header: "### Terraform Plan Results"
           message: |
             ```
-            $(cat tfplan.txt)
+            ${{ steps.read_plan.outputs.plan }}
             ```

@@ -4,7 +4,7 @@ provider "aws" {
     tags = {
       creator = "terraform"
       repo    = "github.com/whume/aws-playground"
-      stack   = "organization"
+      stack   = "networking"
     }
   }
 }
@@ -12,7 +12,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "tf-state-176207359176"
-    key    = "organization/terraform.tfstate"
+    key    = "networking/terraform.tfstate"
     region = "us-east-1"
   }
 }
