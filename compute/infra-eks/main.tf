@@ -17,9 +17,12 @@ module "eks" {
   cluster_name    = local.name
   cluster_version = "1.29"
 
-  enable_cluster_creator_admin_permissions = true
-  cluster_endpoint_public_access           = true
-  cluster_enabled_log_types                = []
+  # Needed Setting See: https://github.com/kubernetes-sigs/aws-load-balancer-controller/issues/1897
+  create_cluster_primary_security_group_tags = false
+
+  enable_cluster_creator_admin_permissions   = true
+  cluster_endpoint_public_access             = true
+  cluster_enabled_log_types                  = []
   cluster_addons = {
     coredns = {
       configuration_values = jsonencode({
