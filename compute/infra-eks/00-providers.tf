@@ -17,7 +17,7 @@ provider "helm" {
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
     }
   }
 }
@@ -32,7 +32,7 @@ provider "kubectl" {
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     command     = "aws"
-    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
   }
 }
 
@@ -46,18 +46,3 @@ terraform {
 
 data "aws_availability_zones" "available" {}
 data "aws_ecrpublic_authorization_token" "token" {}
-
-# AWS Load Balancer Controller
-
-module "load_balancer_controller" {
-  source = "git::https://github.com/DNXLabs/terraform-aws-eks-lb-controller.git"
-
-  helm_chart_version               = "1.7.2"
-  cluster_identity_oidc_issuer     = module.eks.cluster_oidc_issuer_url
-  cluster_identity_oidc_issuer_arn = module.eks.oidc_provider_arn
-  cluster_name                     = module.eks.cluster_name
-  settings                         = {
-    region: "us-east-1"
-    vpcId: data.terraform_remote_state.infra.outputs.infra_vpc_id
-  }
-}

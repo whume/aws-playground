@@ -21,7 +21,7 @@ module "eks" {
   cluster_endpoint_public_access           = true
   cluster_enabled_log_types                = []
   cluster_addons = {
-    coredns                = {
+    coredns = {
       configuration_values = jsonencode({
         computeType = "fargate"
       })
@@ -35,7 +35,7 @@ module "eks" {
   subnet_ids               = data.terraform_remote_state.infra.outputs.infra_private_subnets
   control_plane_subnet_ids = data.terraform_remote_state.infra.outputs.infra_intra_subnets
 
-  authentication_mode       = "API"
+  authentication_mode = "API"
   fargate_profiles = {
     karpenter = {
       selectors = [
@@ -61,7 +61,7 @@ module "karpenter" {
 
   enable_pod_identity             = false
   create_pod_identity_association = false
-  enable_irsa                     =  true
+  enable_irsa                     = true
   irsa_oidc_provider_arn          = module.eks.oidc_provider_arn
 
   node_iam_role_additional_policies = {
@@ -96,6 +96,7 @@ resource "helm_release" "karpenter" {
       interruptionQueue: ${module.karpenter.queue_name}
     EOT
   ]
+  depends_on = [module.eks.fargate_profiles]
 }
 
 resource "kubectl_manifest" "karpenter_node_class" {
@@ -154,24 +155,40 @@ resource "kubectl_manifest" "karpenter_node_pool" {
   ]
 }
 
-
 # Auth
-data "aws_iam_role" "admin" {
-  name = "AWSReservedSSO_AdministratorAccess_90d5adc5d5249c88"
+data "aws_iam_roles" "roles" {
+  name_regex  = "AWSReservedSSO_AdministratorAccess_.*"
+  path_prefix = "/aws-reserved/sso.amazonaws.com/"
 }
 
 resource "aws_eks_access_entry" "infra_admin" {
-  cluster_name      = module.eks.cluster_name
-  principal_arn     = data.aws_iam_role.admin.arn
-  type              = "STANDARD"
+  for_each      = { for idx, arn in data.aws_iam_roles.roles.arns : idx => arn }
+  cluster_name  = module.eks.cluster_name
+  principal_arn = each.value
+  type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "infra_admin" {
+  for_each      = { for idx, arn in data.aws_iam_roles.roles.arns : idx => arn }
   cluster_name  = module.eks.cluster_name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = data.aws_iam_role.admin.arn
-
+  principal_arn = each.value
   access_scope {
-    type       = "cluster"
+    type = "cluster"
   }
+}
+
+# AWS Load Balancer Controller
+module "load_balancer_controller" {
+  source = "git::https://github.com/DNXLabs/terraform-aws-eks-lb-controller.git"
+
+  helm_chart_version               = "1.7.2"
+  cluster_identity_oidc_issuer     = module.eks.cluster_oidc_issuer_url
+  cluster_identity_oidc_issuer_arn = module.eks.oidc_provider_arn
+  cluster_name                     = module.eks.cluster_name
+  settings = {
+    region : "us-east-1"
+    vpcId : data.terraform_remote_state.infra.outputs.infra_vpc_id
+  }
+  depends_on = [module.eks.fargate_profiles]
 }
