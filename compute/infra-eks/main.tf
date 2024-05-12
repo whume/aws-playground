@@ -11,6 +11,18 @@ data "terraform_remote_state" "infra" {
   }
 }
 
+data "aws_subnet" "selected" {
+  for_each = toset(data.terraform_remote_state.infra.outputs.infra_private_subnets)
+  id = each.value
+}
+
+locals {
+  excluded_cidrs      = ["100.64.0.0/16", "100.128.0.0/16"]
+  zone_names          = ["us-east-1a", "us-east-1b"]
+  subnet_ids          = [for sid, subnet in data.aws_subnet.selected : sid if !contains(local.excluded_cidrs, subnet.cidr_block)]
+  excluded_subnet_ids = [for sid, subnet in data.aws_subnet.selected : sid if contains(local.excluded_cidrs, subnet.cidr_block)]
+}
+
 module "eks" {
   source = "terraform-aws-modules/eks/aws"
 
@@ -31,11 +43,20 @@ module "eks" {
     }
     eks-pod-identity-agent = {}
     kube-proxy             = {}
-    vpc-cni                = {}
+    vpc-cni                = {
+
+      most_recent          = true
+      configuration_values = jsonencode({
+        env = {
+          AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG = "true"
+          ENI_CONFIG_LABEL_DEF="topology.kubernetes.io/zone"
+        }
+      })
+    }
   }
 
   vpc_id                   = data.terraform_remote_state.infra.outputs.infra_vpc_id
-  subnet_ids               = data.terraform_remote_state.infra.outputs.infra_private_subnets
+  subnet_ids               = local.subnet_ids
   control_plane_subnet_ids = data.terraform_remote_state.infra.outputs.infra_intra_subnets
 
   authentication_mode = "API"
@@ -54,6 +75,21 @@ module "eks" {
   tags = {
     "karpenter.sh/discovery" = local.name
   }
+}
+
+# This is to leverage the secondary CIDR's for all nodes and pods
+resource "kubectl_manifest" "eks_eni_config" {
+  for_each = { for idx, sid in local.excluded_subnet_ids : idx => sid }
+  yaml_body = <<-YAML
+    apiVersion: crd.k8s.amazonaws.com/v1alpha1
+    kind: ENIConfig
+    metadata:
+      name: ${local.zone_names[each.key]}
+    spec:
+      securityGroups:
+        - ${module.eks.cluster_security_group_id}
+      subnet: ${each.value}
+  YAML
 }
 
 # Karpenter

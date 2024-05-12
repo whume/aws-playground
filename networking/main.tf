@@ -100,7 +100,6 @@ output "infra_vpc_id" {
 output "infra_private_subnets" {
   value = module.infra.private_subnets
 }
-
 output "infra_intra_subnets" {
   value = module.infra.intra_subnets
 }
