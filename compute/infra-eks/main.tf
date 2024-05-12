@@ -17,8 +17,8 @@ data "aws_subnet" "selected" {
 }
 
 locals {
-  excluded_cidrs      = ["100.64.0.0/16", "100.128.0.0/16"]
   zone_names          = ["us-east-1a", "us-east-1b"]
+  excluded_cidrs      = ["100.64.0.0/16", "100.128.0.0/16"]
   subnet_ids          = [for sid, subnet in data.aws_subnet.selected : sid if !contains(local.excluded_cidrs, subnet.cidr_block)]
   excluded_subnet_ids = [for sid, subnet in data.aws_subnet.selected : sid if contains(local.excluded_cidrs, subnet.cidr_block)]
 }
@@ -44,7 +44,6 @@ module "eks" {
     eks-pod-identity-agent = {}
     kube-proxy             = {}
     vpc-cni                = {
-
       most_recent          = true
       configuration_values = jsonencode({
         env = {
