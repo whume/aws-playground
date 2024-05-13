@@ -2,10 +2,11 @@
 data "aws_availability_zones" "available" {}
 
 locals {
-  region     = "us-east-1"
-  vpc_cidr   = "10.130.0.0/16"
-  vpc_cidr_2 = "10.134.0.0/16"
-  azs        = slice(data.aws_availability_zones.available.names, 0, 2)
+  region                = "us-east-1"
+  vpc_cidr              = "10.130.0.0/16"
+  secondary_cidr_blocks = ["100.64.0.0/16", "100.128.0.0/16"]
+  vpc_cidr_2            = "10.134.0.0/16"
+  azs                   = slice(data.aws_availability_zones.available.names, 0, 2)
 }
 
 ################################################################################
@@ -15,11 +16,15 @@ locals {
 module "infra" {
   source = "terraform-aws-modules/vpc/aws"
 
-  name = "infra"
-  cidr = local.vpc_cidr
+  name                  = "infra"
+  cidr                  = local.vpc_cidr
+  secondary_cidr_blocks = local.secondary_cidr_blocks
 
   azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k + 4)]
+  private_subnets = concat(
+    [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 6, k + 4)],
+    [for k, v in local.azs : element(local.secondary_cidr_blocks, k)]
+  )
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 128)]
   intra_subnets   = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 220)]
 
@@ -95,7 +100,6 @@ output "infra_vpc_id" {
 output "infra_private_subnets" {
   value = module.infra.private_subnets
 }
-
 output "infra_intra_subnets" {
   value = module.infra.intra_subnets
 }
